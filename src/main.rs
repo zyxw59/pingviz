@@ -4,6 +4,12 @@ extern crate relm;
 #[macro_use]
 extern crate relm_derive;
 
-use relm::{Relm, Widget};fn main() {
-    println!("Hello, world!");
+use relm::Widget;
+
+mod view;
+
+use view::Win;
+
+fn main() {
+    Win::run(()).unwrap();
 }
