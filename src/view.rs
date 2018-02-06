@@ -4,6 +4,16 @@ use gtk::{Window, WindowType};
 use relm::{Relm, Update, Widget};
 
 pub struct Model {
+    data: Vec<(usize, usize)>,
+    avg: usize,
+}
+
+impl Model {
+    fn push(&mut self, seq: usize, time: usize) {
+        self.data.push((seq, time));
+        let n = self.data.len();
+        self.avg = (self.avg * (n - 1) + time) / n;
+    }
 }
 
 pub struct Win {
@@ -13,6 +23,7 @@ pub struct Win {
 
 #[derive(Msg)]
 pub enum Msg {
+    Push(usize, usize),
     Quit,
 }
 
@@ -23,11 +34,16 @@ impl Update for Win {
 
     fn model(_: &Relm<Self>, _: Self::ModelParam) -> Self::Model {
         Model {
+            data: Vec::new(),
+            avg: 0,
         }
     }
 
     fn update(&mut self, event: Msg) {
         match event {
+            Msg::Push(seq, time) => {
+                self.model.push(seq, time);
+            },
             Msg::Quit => gtk::main_quit(),
         }
     }
