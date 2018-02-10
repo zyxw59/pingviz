@@ -4,7 +4,12 @@ version = "0.1.0"
 authors = ["Emily Crandall Fleischman <emilycf@mit.edu>"]
 
 [dependencies]
+cairo-rs = "^0.3.0"
+futures = "0.1.18"
+futures-glib = "0.3.2"
+gdk = "^0.7.0"
 gtk = "^0.3.0"
+rand = "0.4"
 relm = "^0.11.0"
 relm-derive = "^0.11.0"
 
