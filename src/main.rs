@@ -12,6 +12,7 @@ extern crate relm_derive;
 use relm::Widget;
 
 mod stdin;
+mod util;
 mod view;
 
 use view::Win;

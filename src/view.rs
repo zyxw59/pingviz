@@ -1,5 +1,4 @@
 use cairo;
-use futures_glib::Interval;
 use gdk::ContextExt;
 use gtk::{
     self,
@@ -125,7 +124,7 @@ impl Model {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 struct Bounds {
     pub x_min: f64,
     pub y_min: f64,
