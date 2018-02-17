@@ -8,44 +8,51 @@ use gtk::{
 use relm::{Relm, Update, Widget};
 
 use stdin;
+use util::Data;
+
+/// Number of data points to display
+const NUM_DATA_POINTS: usize = 120;
 
 /// A `Model` stores information about the state of the program
 #[derive(Clone,Debug)]
 pub struct Model {
-    /// Data plotted on the graph
-    data: Vec<(f64, f64)>,
+    /// x-coordinates of data plotted on the graph
+    x: Data<f64>,
+    /// y-coordinates of data plotted on the graph
+    y: Data<f64>,
     /// A sum of the data points, for quick calculation of the average
     sum: f64,
     /// A sum of the squares of the data points, for quick calculation of the variance
     sqsum: f64,
-    /// Bounds on data
-    bounds: Option<Bounds>
 }
 
 impl Model {
     pub fn new() -> Model {
         Model {
-            data: Vec::new(),
+            x: Data::with_capacity(NUM_DATA_POINTS),
+            y: Data::with_capacity(NUM_DATA_POINTS),
             sum: 0.0,
             sqsum: 0.0,
-            bounds: None,
         }
     }
 
     /// Clear the data
     pub fn clear(&mut self) {
-        self.data.clear();
+        self.x.clear();
+        self.y.clear();
         self.sum = 0.0;
         self.sqsum = 0.0;
-        self.bounds = None;
     }
 
     /// Push the given `x`, `y` pair
     pub fn push(&mut self, x: f64, y: f64) {
-        self.data.push((x, y));
-        self.sum += x;
-        self.sqsum += x * x;
-        self.bounds = Some(self.bounds.map_or(Bounds::from(x, y), |b| b.update(x, y)));
+        self.x.push(x);
+        if let Some(old) = self.y.push(y) {
+            self.sum -= old;
+            self.sqsum -= old * old;
+        }
+        self.sum += y;
+        self.sqsum += y * y;
     }
 
     /// Draw the graph to the provided `Context` with the given `width` and `height`
@@ -67,7 +74,8 @@ impl Model {
 
         // we can unwrap here because as long as self.len() > 0, at least one (x, y) pair has been
         // pushed, so the bounds have been set
-        let bounds = self.bounds.unwrap();
+        let x_bounds = self.x.bounds().unwrap();
+        let y_bounds = self.y.bounds().unwrap();
 
         // now use height and width of padded area
         let width = width - 2.0 * padding;
@@ -77,17 +85,17 @@ impl Model {
         // x_s = x_d * dx + x_0
         // y_s = y_d * dy + x_0
 
-        let dx = if bounds.x_range() == 0.0 { 0.0 } else { width / bounds.x_range() };
-        let dy = if bounds.y_range() == 0.0 { 0.0 } else { height / bounds.y_range() };
+        let dx = if x_bounds.range() == 0.0 { 0.0 } else { width / x_bounds.range() };
+        let dy = if y_bounds.range() == 0.0 { 0.0 } else { height / y_bounds.range() };
 
         // if either the x or y range is 0, center points on that axis (rather than placing them
         // along the edge)
-        let x0 = padding + if dx == 0.0 { width / 2.0 } else { -bounds.x_min * dx };
-        let y0 = padding + if dy == 0.0 { height / 2.0 } else { -bounds.y_min * dy };
+        let x0 = padding + if dx == 0.0 { width / 2.0 } else { -x_bounds.min() * dx };
+        let y0 = padding + if dy == 0.0 { height / 2.0 } else { -y_bounds.min() * dy };
 
         // draw line
-        ctx.move_to(self.data[0].0 * dx + x0, self.data[0].1 * dy + y0);
-        for &(x, y) in self.data.iter() {
+        ctx.move_to(self.x.first().unwrap() * dx + x0, self.y.first().unwrap() * dy + y0);
+        for (&x, &y) in self.x.iter().zip(self.y.iter()) {
             ctx.line_to(x * dx + x0, y * dy + y0);
         }
         ctx.stroke();
@@ -95,7 +103,7 @@ impl Model {
         // draw points
         ctx.set_line_width(6.0);
         ctx.set_line_cap(cairo::LineCap::Round);
-        for &(x, y) in self.data.iter() {
+        for (&x, &y) in self.x.iter().zip(self.y.iter()) {
             ctx.move_to(x * dx + x0, y * dy + y0);
             ctx.close_path();
         }
@@ -104,7 +112,7 @@ impl Model {
 
     /// Return the mean of the `y` data
     pub fn mean(&self) -> f64 {
-        self.sum / (self.data.len() as f64)
+        self.sum / (self.x.len() as f64)
     }
 
     /// Return the variance of the `y` data
@@ -120,52 +128,7 @@ impl Model {
 
     /// Return the number of data points
     pub fn len(&self) -> usize {
-        self.data.len()
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-struct Bounds {
-    pub x_min: f64,
-    pub y_min: f64,
-    pub x_max: f64,
-    pub y_max: f64,
-}
-
-impl Bounds {
-    pub fn new() -> Bounds {
-        Bounds {
-            x_min: 0.0,
-            y_min: 0.0,
-            x_max: 0.0,
-            y_max: 0.0,
-        }
-    }
-
-    pub fn from(x: f64, y: f64) -> Bounds {
-        Bounds {
-            x_min: x,
-            y_min: y,
-            x_max: x,
-            y_max: y,
-        }
-    }
-
-    pub fn update(self, x: f64, y: f64) -> Bounds {
-        Bounds {
-            x_min: self.x_min.min(x),
-            y_min: self.y_min.min(y),
-            x_max: self.x_max.max(x),
-            y_max: self.y_max.max(y),
-        }
-    }
-
-    pub fn x_range(self) -> f64 {
-        self.x_max - self.x_min
-    }
-
-    pub fn y_range(self) -> f64 {
-        self.y_max - self.y_min
+        self.x.len()
     }
 }
 

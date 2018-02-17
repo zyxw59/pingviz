@@ -47,7 +47,7 @@ mod tests {
 
 /// A struct to keep track of the upper and lower bounds of a dataset.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-struct Bounds<T> {
+pub struct Bounds<T> {
     max: T,
     min: T,
     max_index: usize,
@@ -63,6 +63,16 @@ impl<T> Bounds<T> where T: PartialOrd + Copy {
             max_index: idx,
             min_index: idx,
         }
+    }
+
+    /// Returns the upper bound
+    pub fn max(&self) -> &T {
+        &self.max
+    }
+
+    /// Returns the lower bound
+    pub fn min(&self) -> &T {
+        &self.min
     }
 
     /// Replaces the maximum with the maximum of the iterator. If the iterator is empty, no changes
@@ -126,7 +136,14 @@ impl<T> Bounds<T> where T: PartialOrd + Copy {
     }
 }
 
-struct Data<T> {
+impl<T> Bounds<T> where T: ops::Sub + Copy {
+    pub fn range(&self) -> <T as ops::Sub>::Output {
+        self.max - self.min
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Data<T> {
     data: Vec<T>,
     cap: Option<usize>,
     start: usize,
@@ -180,14 +197,30 @@ impl<T> Data<T> {
         }
     }
 
+    pub fn first(&self) -> Option<&T> {
+        self.get(self.start)
+    }
+
     pub fn clear(&mut self) {
         self.data.clear();
         self.start = 0;
         self.bounds = None;
     }
 
+    pub fn cap(&self) -> Option<usize> {
+        self.cap
+    }
+
     pub fn len(&self) -> usize {
         self.len
+    }
+
+    pub fn start(&self) -> usize {
+        self.start
+    }
+
+    pub fn bounds(&self) -> Option<&Bounds<T>> {
+        self.bounds.as_ref()
     }
 }
 
