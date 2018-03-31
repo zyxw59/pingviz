@@ -83,7 +83,7 @@ impl Model {
 
         // data -> screen coordinate conversion:
         // x_s = x_d * dx + x_0
-        // y_s = y_d * dy + x_0
+        // y_s = y_d * dy + y_0
 
         let dx = if x_bounds.range() == 0.0 { 0.0 } else { width / x_bounds.range() };
         let dy = if y_bounds.range() == 0.0 { 0.0 } else { height / y_bounds.range() };
@@ -91,12 +91,12 @@ impl Model {
         // if either the x or y range is 0, center points on that axis (rather than placing them
         // along the edge)
         let x0 = padding + if dx == 0.0 { width / 2.0 } else { -x_bounds.min() * dx };
-        let y0 = padding + if dy == 0.0 { height / 2.0 } else { -y_bounds.min() * dy };
+        let y0 = padding + if dy == 0.0 { height / 2.0 } else { y_bounds.max() * dy };
 
         // draw line
         ctx.move_to(self.x.first().unwrap() * dx + x0, self.y.first().unwrap() * dy + y0);
         for (&x, &y) in self.x.iter().zip(self.y.iter()) {
-            ctx.line_to(x * dx + x0, y * dy + y0);
+            ctx.line_to(x * dx + x0, -y * dy + y0);
         }
         ctx.stroke();
 
@@ -104,7 +104,7 @@ impl Model {
         ctx.set_line_width(6.0);
         ctx.set_line_cap(cairo::LineCap::Round);
         for (&x, &y) in self.x.iter().zip(self.y.iter()) {
-            ctx.move_to(x * dx + x0, y * dy + y0);
+            ctx.move_to(x * dx + x0, -y * dy + y0);
             ctx.close_path();
         }
         ctx.stroke();
