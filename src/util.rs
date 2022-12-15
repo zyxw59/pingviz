@@ -1,7 +1,4 @@
-use std::{
-    mem,
-    ops,
-};
+use std::{mem, ops};
 
 #[cfg(test)]
 mod tests {
@@ -12,12 +9,15 @@ mod tests {
         let mut b = Bounds::from_value(0, 0);
         b.update(1, 1);
         b.update(2, -1);
-        assert_eq!(b, Bounds {
-            max: 1,
-            min: -1,
-            max_index: 1,
-            min_index: 2,
-        });
+        assert_eq!(
+            b,
+            Bounds {
+                max: 1,
+                min: -1,
+                max_index: 1,
+                min_index: 2,
+            }
+        );
     }
 
     #[test]
@@ -26,22 +26,28 @@ mod tests {
         assert_eq!(data.push(2), None);
         assert_eq!(data.push(1), None);
         assert_eq!(data.push(-1), None);
-        assert_eq!(data.bounds, Some(Bounds {
-            max: 2,
-            min: -1,
-            max_index: 0,
-            min_index: 2,
-        }));
+        assert_eq!(
+            data.bounds,
+            Some(Bounds {
+                max: 2,
+                min: -1,
+                max_index: 0,
+                min_index: 2,
+            })
+        );
         assert_eq!(data.push(0), Some(2));
         assert_eq!(data.data, vec![0, 1, -1]);
         assert_eq!(data.get(0), None);
         assert_eq!(data.get(3), Some(&0));
-        assert_eq!(data.bounds, Some(Bounds {
-            max: 1,
-            min: -1,
-            max_index: 1,
-            min_index: 2,
-        }));
+        assert_eq!(
+            data.bounds,
+            Some(Bounds {
+                max: 1,
+                min: -1,
+                max_index: 1,
+                min_index: 2,
+            })
+        );
     }
 }
 
@@ -54,7 +60,10 @@ pub struct Bounds<T> {
     min_index: usize,
 }
 
-impl<T> Bounds<T> where T: PartialOrd + Copy {
+impl<T> Bounds<T>
+where
+    T: PartialOrd + Copy,
+{
     /// Creates a new `Bounds` with the specified index and value
     pub fn from_value(idx: usize, elem: T) -> Bounds<T> {
         Bounds {
@@ -78,9 +87,9 @@ impl<T> Bounds<T> where T: PartialOrd + Copy {
     /// Replaces the maximum with the maximum of the iterator. If the iterator is empty, no changes
     /// occur.
     pub fn update_max_iter<'a, I>(&mut self, mut iter: I)
-        where
-            I: Iterator<Item=(usize, &'a T)>,
-            T: 'a,
+    where
+        I: Iterator<Item = (usize, &'a T)>,
+        T: 'a,
     {
         if let Some((idx, &elem)) = iter.next() {
             self.max = elem;
@@ -94,9 +103,9 @@ impl<T> Bounds<T> where T: PartialOrd + Copy {
     /// Replaces the minimum with the minimum of the iterator. If the iterator is empty, no changes
     /// occur.
     pub fn update_min_iter<'a, I>(&mut self, mut iter: I)
-        where
-            I: Iterator<Item=(usize, &'a T)>,
-            T: 'a,
+    where
+        I: Iterator<Item = (usize, &'a T)>,
+        T: 'a,
     {
         if let Some((idx, &elem)) = iter.next() {
             self.min = elem;
@@ -136,7 +145,10 @@ impl<T> Bounds<T> where T: PartialOrd + Copy {
     }
 }
 
-impl<T> Bounds<T> where T: ops::Sub + Copy {
+impl<T> Bounds<T>
+where
+    T: ops::Sub + Copy,
+{
     pub fn range(&self) -> <T as ops::Sub>::Output {
         self.max - self.min
     }
@@ -224,7 +236,10 @@ impl<T> Data<T> {
     }
 }
 
-impl<T> Data<T> where T: PartialOrd + Copy {
+impl<T> Data<T>
+where
+    T: PartialOrd + Copy,
+{
     /// Pushes an element, and returns the element (if any) removed to make room
     pub fn push(&mut self, elem: T) -> Option<T> {
         match self.cap {
@@ -238,8 +253,12 @@ impl<T> Data<T> where T: PartialOrd + Copy {
                     // nope, just push
                     self.data.push(elem);
                     self.bounds = Some(self.bounds.map_or(
-                            Bounds::from_value(self.len, elem),
-                            |mut b| { b.update(self.len, elem); b } ));
+                        Bounds::from_value(self.len, elem),
+                        |mut b| {
+                            b.update(self.len, elem);
+                            b
+                        },
+                    ));
                     self.len += 1;
                     None
                 } else {
@@ -267,13 +286,16 @@ impl<T> Data<T> where T: PartialOrd + Copy {
 
                     Some(mem::replace(&mut self.data[(self.start - 1) % cap], elem))
                 }
-            },
+            }
             None => {
                 self.data.push(elem);
                 self.len += 1;
-                self.bounds = self.bounds.map(|mut b| { b.update(self.len, elem); b });
+                self.bounds = self.bounds.map(|mut b| {
+                    b.update(self.len, elem);
+                    b
+                });
                 None
-            },
+            }
         }
     }
 }
@@ -282,9 +304,15 @@ impl<T> ops::Index<usize> for Data<T> {
     type Output = T;
 
     fn index(&self, index: usize) -> &T {
-        self.get(index)
-            .unwrap_or_else(|| panic!("index out of bounds: the len is {} and the start is {} \
-                            but the index is {}", self.len(), self.start, index))
+        self.get(index).unwrap_or_else(|| {
+            panic!(
+                "index out of bounds: the len is {} and the start is {} \
+                            but the index is {}",
+                self.len(),
+                self.start,
+                index
+            )
+        })
     }
 }
 
@@ -319,4 +347,3 @@ impl<'a, T> Iterator for DataEnumerate<'a, T> {
         el.map(|e| (self.index - 1, e))
     }
 }
-

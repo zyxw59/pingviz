@@ -1,11 +1,7 @@
 #![allow(dead_code)]
 
 use gdk::ContextExt;
-use gtk::{
-    self,
-    ContainerExt,
-    WidgetExt,
-};
+use gtk::{self, ContainerExt, WidgetExt};
 use relm::{Relm, Update, Widget};
 
 use crate::stdin;
@@ -15,7 +11,7 @@ use crate::util::Data;
 const NUM_DATA_POINTS: usize = 120;
 
 /// A `Model` stores information about the state of the program
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct Model {
     /// x-coordinates of data plotted on the graph
     x: Data<f64>,
@@ -66,7 +62,12 @@ impl Model {
         ctx.fill();
         ctx.set_source_rgb(0.0, 0.0, 0.0);
         ctx.set_line_width(1.0);
-        ctx.rectangle(padding, padding, width - 2.0 * padding, height - 2.0 * padding);
+        ctx.rectangle(
+            padding,
+            padding,
+            width - 2.0 * padding,
+            height - 2.0 * padding,
+        );
         ctx.stroke();
 
         if self.len() == 0 {
@@ -86,16 +87,37 @@ impl Model {
         // x_s = x_d * dx + x_0
         // y_s = y_d * dy + y_0
 
-        let dx = if x_bounds.range() == 0.0 { 0.0 } else { width / x_bounds.range() };
-        let dy = if y_bounds.range() == 0.0 { 0.0 } else { height / y_bounds.range() };
+        let dx = if x_bounds.range() == 0.0 {
+            0.0
+        } else {
+            width / x_bounds.range()
+        };
+        let dy = if y_bounds.range() == 0.0 {
+            0.0
+        } else {
+            height / y_bounds.range()
+        };
 
         // if either the x or y range is 0, center points on that axis (rather than placing them
         // along the edge)
-        let x0 = padding + if dx == 0.0 { width / 2.0 } else { -x_bounds.min() * dx };
-        let y0 = padding + if dy == 0.0 { height / 2.0 } else { y_bounds.max() * dy };
+        let x0 = padding
+            + if dx == 0.0 {
+                width / 2.0
+            } else {
+                -x_bounds.min() * dx
+            };
+        let y0 = padding
+            + if dy == 0.0 {
+                height / 2.0
+            } else {
+                y_bounds.max() * dy
+            };
 
         // draw line
-        ctx.move_to(self.x.first().unwrap() * dx + x0, self.y.first().unwrap() * dy + y0);
+        ctx.move_to(
+            self.x.first().unwrap() * dx + x0,
+            self.y.first().unwrap() * dy + y0,
+        );
         for (&x, &y) in self.x.iter().zip(self.y.iter()) {
             ctx.line_to(x * dx + x0, -y * dy + y0);
         }
@@ -133,7 +155,7 @@ impl Model {
     }
 }
 
-#[derive(Clone,Copy,Debug,Msg)]
+#[derive(Clone, Copy, Debug, Msg)]
 pub enum Msg {
     Pass,
     Push(f64, f64),
@@ -152,7 +174,8 @@ impl Win {
     fn draw(&mut self) {
         let ctx = cairo::Context::create_from_window(&self.graph.get_window().unwrap());
         let alloc = self.graph.get_allocation();
-        self.model.draw(&ctx, alloc.width.into(), alloc.height.into());
+        self.model
+            .draw(&ctx, alloc.width.into(), alloc.height.into());
     }
 }
 
@@ -183,7 +206,7 @@ impl Update for Win {
             Msg::Push(x, y) => {
                 self.model.push(x, y);
                 self.draw();
-            },
+            }
             Msg::Quit => gtk::main_quit(),
             Msg::Pass => (),
         }
@@ -203,10 +226,12 @@ impl Widget for Win {
 
         window.add(&graph);
 
-        connect!(relm,
-                 window,
-                 connect_delete_event(_, _),
-                 return (Some(Msg::Quit), gtk::Inhibit(false)));
+        connect!(
+            relm,
+            window,
+            connect_delete_event(_, _),
+            return (Some(Msg::Quit), gtk::Inhibit(false))
+        );
         window.show_all();
 
         Win {

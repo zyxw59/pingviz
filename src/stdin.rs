@@ -4,7 +4,7 @@ use std::thread;
 use futures::sync::mpsc;
 use futures::{Future, Sink, Stream};
 
-pub fn stdin() -> Box<dyn Stream<Item=String, Error=io::Error> + Send + 'static> {
+pub fn stdin() -> Box<dyn Stream<Item = String, Error = io::Error> + Send + 'static> {
     let (mut tx, rx) = mpsc::channel(1);
     thread::spawn(move || {
         let input = io::stdin();
