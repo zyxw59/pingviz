@@ -82,13 +82,13 @@ impl<T> Bounds<T> where T: PartialOrd + Copy {
             I: Iterator<Item=(usize, &'a T)>,
             T: 'a,
     {
-        iter.next().map(|(idx, &elem)| {
+        if let Some((idx, &elem)) = iter.next() {
             self.max = elem;
             self.max_index = idx;
             for (idx, &elem) in iter {
                 self.update_max(idx, elem);
             }
-        });
+        }
     }
 
     /// Replaces the minimum with the minimum of the iterator. If the iterator is empty, no changes
@@ -98,13 +98,13 @@ impl<T> Bounds<T> where T: PartialOrd + Copy {
             I: Iterator<Item=(usize, &'a T)>,
             T: 'a,
     {
-        iter.next().map(|(idx, &elem)| {
+        if let Some((idx, &elem)) = iter.next() {
             self.min = elem;
             self.min_index = idx;
             for (idx, &elem) in iter {
                 self.update_min(idx, elem);
             }
-        });
+        }
     }
 
     /// Updates the maximum, and returns whether the maximum was updated
@@ -174,14 +174,14 @@ impl<T> Data<T> {
 
     pub fn iter(&self) -> DataIter<T> {
         DataIter {
-            data: &self,
+            data: self,
             index: self.start,
         }
     }
 
     pub fn enumerate(&self) -> DataEnumerate<T> {
         DataEnumerate {
-            data: &self,
+            data: self,
             index: self.start,
         }
     }
@@ -283,8 +283,8 @@ impl<T> ops::Index<usize> for Data<T> {
 
     fn index(&self, index: usize) -> &T {
         self.get(index)
-            .expect(format!("index out of bounds: the len is {} and the start is {} \
-                            but the index is {}", self.len(), self.start, index).as_ref())
+            .unwrap_or_else(|| panic!("index out of bounds: the len is {} and the start is {} \
+                            but the index is {}", self.len(), self.start, index))
     }
 }
 

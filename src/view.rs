@@ -1,4 +1,5 @@
-use cairo;
+#![allow(dead_code)]
+
 use gdk::ContextExt;
 use gtk::{
     self,
