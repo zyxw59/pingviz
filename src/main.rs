@@ -15,7 +15,7 @@ mod stdin;
 mod util;
 mod view;
 
-use view::Win;
+use crate::view::Win;
 
 fn main() {
     Win::run(()).unwrap();

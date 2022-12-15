@@ -7,8 +7,8 @@ use gtk::{
 };
 use relm::{Relm, Update, Widget};
 
-use stdin;
-use util::Data;
+use crate::stdin;
+use crate::util::Data;
 
 /// Number of data points to display
 const NUM_DATA_POINTS: usize = 120;
